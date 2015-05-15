@@ -1,5 +1,5 @@
 <?php return array (
-  'manifest-version' => '1.1',
+  'manifest-version' => '1.1.0',
   'manifest-attributes' => 
   array (
     'readme' => 'YandexMoney + Modx 2.X Revo + ShopKeeper
