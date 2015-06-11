@@ -7,7 +7,7 @@
  *
  * @author YandexMoney
  * @package yandexmoney
- * @version 1.0
+ * @version 1.1.0
  */
 
 
@@ -51,7 +51,9 @@ class Yandexmoney {
 	public $method_wm;
 	public $method_ab;
 	public $method_sb;
-
+	public $method_ma;
+	public $method_pb;
+	
 	public $pay_method;
     
     function __construct(modX &$modx,$config = array()) {
@@ -121,61 +123,55 @@ class Yandexmoney {
 	}
 
 	public function checkPayMethod(){
-		if ($this->pay_method == 'PC' || $this->pay_method == 'AC' || $this->pay_method == 'GP' || $this->pay_method == 'MC' || $this->pay_method == 'AB' || $this->pay_method == 'WM'){
-			return TRUE;
-		}else{
-			return FALSE;
-		}
+		if (in_array($this->pay_method, array('PC','AC','MC','GP','WM','AB','SB','MA','PB'))) return TRUE;
+		return FALSE;
 	}
 
 	public function getSelectHtml(){
 		if ($this->method_ym == 1) {
 			$output .= '<option value="PC"';
-			if ($this->pay_method == 'PC'){
-				$output.=' selected ';
-			}
-			$output .= '>электронная валюта Яндекс.Деньги</option>';
+			if ($this->pay_method == 'PC') $output.=' selected ';
+			$output .= '>Оплата из кошелька в Яндекс.Деньгах</option>';
 		}
 		if ($this->method_cards == 1) {
 			$output .= '<option value="AC"';
-			if ($this->pay_method == 'AC'){
-				$output.=' selected ';
-			}
-			$output .= '>банковские карты VISA, MasterCard, Maestro</option>';
+			if ($this->pay_method == 'AC') $output.=' selected ';
+			$output .= '>Оплата с произвольной банковской карты</option>';
 		}
 		if ($this->method_cash == 1 && $this->org_mode) {
 			$output .= '<option value="GP"';
-			if ($this->pay_method == 'GP'){
-				$output.=' selected ';
-			}
-			$output .= '>наличными в кассах и терминалах партнеров</option>';
+			if ($this->pay_method == 'GP') $output.=' selected ';
+			$output .= '>Оплата наличными через кассы и терминалы</option>';
 		}
 		if ($this->method_mobile == 1 &&  $this->org_mode) {
 			$output .= '<option value="MC"';
-			if ($this->pay_method == 'MC'){
-				$output.=' selected ';
-			}
-			$output .= '>оплата со счета мобильного телефона</option>';
+			if ($this->pay_method == 'MC') $output.=' selected ';
+			$output .= '>Платеж со счета мобильного телефона</option>';
 		}
 		if ($this->method_ab == 1 &&  $this->org_mode) {
 			$output .= '<option value="AB"';
-			if ($this->pay_method == 'AB'){
-				$output.=' selected ';
-			}
-			$output .= '>Альфаклик</option>';
+			if ($this->pay_method == 'AB') $output.=' selected ';
+			$output .= '>Оплата через Альфа-Клик</option>';
 		}
 		if ($this->method_sb == 1 &&  $this->org_mode) {
 			$output .= '<option value="SB"';
-			if ($this->pay_method == 'SB'){
-				$output.=' selected ';
-			}
-			$output .= '>Сбербанк Онлайн</option>';
-		}		if ($this->method_wm == 1 &&  $this->org_mode) {
+			if ($this->pay_method == 'SB') $output.=' selected ';
+			$output .= '>Оплата через Сбербанк: оплата по SMS или Сбербанк Онлайн</option>';
+		}		
+		if ($this->method_wm == 1 &&  $this->org_mode) {
 			$output .= '<option value="WM"';
-			if ($this->pay_method == 'WM'){
-				$output.=' selected ';
-			}
-			$output .= '>электронная валюта WebMoney</option>';
+			if ($this->pay_method == 'WM') $output.=' selected '; 
+			$output .= '>Оплата из кошелька в системе WebMoney</option>';
+		}
+		if ($this->method_ma == 1 &&  $this->org_mode) {
+			$output .= '<option value="MA"';
+			if ($this->pay_method == 'MA') $output.=' selected '; 
+			$output .= '>Оплата через MasterPass</option>';
+		}
+		if ($this->method_pb == 1 &&  $this->org_mode) {
+			$output .= '<option value="PB"';
+			if ($this->pay_method == 'PB') $output.=' selected '; 
+			$output .= '>Оплата через интернет-банк Промсвязьбанка</option>';
 		}
 		return $output;
 	}
@@ -203,7 +199,7 @@ class Yandexmoney {
 					   <input type="hidden" name="comment-needed" value="'.$this->comment_needed.'">
 					   <input type="hidden" name="label" value="'.$this->orderId.'">
 					   <input type="hidden" name="quickpay-form" value="'.$this->quickpay_form.'">
-					   <input type="hidden" name="payment-type" value="'.$this->pay_method.'">
+					   <input type="hidden" name="paymentType" value="'.$this->pay_method.'">
 					   <input type="hidden" name="targets" value="Заказ '.$this->orderId.'">
 					   <input type="hidden" name="sum" value="'.$this->orderTotal.'" data-type="number" >
 					   <input type="hidden" name="comment" value="'.$this->comment.'" >
