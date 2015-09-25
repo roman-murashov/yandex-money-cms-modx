@@ -7,7 +7,7 @@
  *
  * @author YandexMoney
  * @package yandexmoney
- * @version 1.1.0
+ * @version 1.2.0
  */
 
 
@@ -123,55 +123,31 @@ class Yandexmoney {
 	}
 
 	public function checkPayMethod(){
-		if (in_array($this->pay_method, array('PC','AC','MC','GP','WM','AB','SB','MA','PB'))) return TRUE;
+		if (in_array($this->pay_method, array('PC','AC','MC','GP','WM','AB','SB','MA','PB','QW','QP'))) return TRUE;
 		return FALSE;
 	}
 
 	public function getSelectHtml(){
-		if ($this->method_ym == 1) {
-			$output .= '<option value="PC"';
-			if ($this->pay_method == 'PC') $output.=' selected ';
-			$output .= '>Оплата из кошелька в Яндекс.Деньгах</option>';
-		}
-		if ($this->method_cards == 1) {
-			$output .= '<option value="AC"';
-			if ($this->pay_method == 'AC') $output.=' selected ';
-			$output .= '>Оплата с произвольной банковской карты</option>';
-		}
-		if ($this->method_cash == 1 && $this->org_mode) {
-			$output .= '<option value="GP"';
-			if ($this->pay_method == 'GP') $output.=' selected ';
-			$output .= '>Оплата наличными через кассы и терминалы</option>';
-		}
-		if ($this->method_mobile == 1 &&  $this->org_mode) {
-			$output .= '<option value="MC"';
-			if ($this->pay_method == 'MC') $output.=' selected ';
-			$output .= '>Платеж со счета мобильного телефона</option>';
-		}
-		if ($this->method_ab == 1 &&  $this->org_mode) {
-			$output .= '<option value="AB"';
-			if ($this->pay_method == 'AB') $output.=' selected ';
-			$output .= '>Оплата через Альфа-Клик</option>';
-		}
-		if ($this->method_sb == 1 &&  $this->org_mode) {
-			$output .= '<option value="SB"';
-			if ($this->pay_method == 'SB') $output.=' selected ';
-			$output .= '>Оплата через Сбербанк: оплата по SMS или Сбербанк Онлайн</option>';
-		}		
-		if ($this->method_wm == 1 &&  $this->org_mode) {
-			$output .= '<option value="WM"';
-			if ($this->pay_method == 'WM') $output.=' selected '; 
-			$output .= '>Оплата из кошелька в системе WebMoney</option>';
-		}
-		if ($this->method_ma == 1 &&  $this->org_mode) {
-			$output .= '<option value="MA"';
-			if ($this->pay_method == 'MA') $output.=' selected '; 
-			$output .= '>Оплата через MasterPass</option>';
-		}
-		if ($this->method_pb == 1 &&  $this->org_mode) {
-			$output .= '<option value="PB"';
-			if ($this->pay_method == 'PB') $output.=' selected '; 
-			$output .= '>Оплата через интернет-банк Промсвязьбанка</option>';
+		$list_methods=array(
+			'ym'=>array('PC'=>'Оплата из кошелька в Яндекс.Деньгах'),
+			'cards'=>array('AC'=>'Оплата с произвольной банковской карты'),
+			'cash'=>array('GP'=>'Оплата наличными через кассы и терминалы'),
+			'mobile'=>array('MC'=>'Платеж со счета мобильного телефона'),
+			'ab'=>array('AB'=>'Оплата через Альфа-Клик'),
+			'sb'=>array('SB'=>'Оплата через Сбербанк: оплата по SMS или Сбербанк Онлайн'),
+			'wm'=>array('WM'=>'Оплата из кошелька в системе WebMoney'),
+			'ma'=>array('MA'=>'Оплата через MasterPass'),
+			'pb'=>array('PB'=>'Оплата через интернет-банк Промсвязьбанка'),
+			'qw'=>array('QW'=>'Оплата через QIWI Wallet'),
+			'qp'=>array('QP'=>'Оплата через доверительный платеж (Куппи.ру)')
+		);
+		foreach ($list_methods as $long_name=>$method_desc){
+			$by_default=(in_array($long_name, array('ym','cards')))?true:$this->org_mode;
+			if ($this->{'method_'.$long_name} == 1 && $by_default) {
+				$output .= '<option value="'.key($method_desc).'"';
+				if ($this->pay_method == key($method_desc)) $output.=' selected ';
+				$output .= '>'.$method_desc[key($method_desc)].'</option>';
+			}
 		}
 		return $output;
 	}
@@ -207,7 +183,7 @@ class Yandexmoney {
 					   <input type="hidden" name="need-email" value="'.$this->need_email.'" >
 					   <input type="hidden" name="need-phone" value="'.$this->need_phone.'">
 					   <input type="hidden" name="need-address" value="'.$this->need_address.'">
-					 
+						<input type="hidden" name="SuccessUrl" value="'.$this->successUrl.'" >
 					</form>';
 		}
 		$html .= '<script type="text/javascript">
