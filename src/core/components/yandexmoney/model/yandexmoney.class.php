@@ -227,7 +227,7 @@ class Yandexmoney {
 			}else{
 				$this->sendCode($callbackParams, $code);
 			}
-			exit;
+			return;
 		}else{
 			return $code;
 		}
@@ -253,9 +253,9 @@ class Yandexmoney {
 			if ($callbackParams['action'] == 'checkOrder'){
 				$code = $this->checkOrder($callbackParams);
 				$this->sendCode($callbackParams, $code);
-				$order_id = (int)$callbackParams["orderNumber"];
 			}
 			if ($callbackParams['action'] == 'paymentAviso'){
+				$order_id = (int)$callbackParams["orderNumber"];
 				$this->checkOrder($callbackParams, TRUE, TRUE);
 			}
 		}else{
