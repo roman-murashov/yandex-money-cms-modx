@@ -20,7 +20,7 @@ if (!empty($_POST['payment'])){
 	$ym->pay_method = $_POST['payment'];
 }
 if (!$ym->checkPayMethod()){
-	return false;
+	return true;
 }
 
 $modx->addPackage('shopkeeper', MODX_CORE_PATH."components/shopkeeper/model/");
