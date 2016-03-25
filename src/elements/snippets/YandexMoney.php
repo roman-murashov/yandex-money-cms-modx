@@ -16,7 +16,7 @@ if (!empty($_POST['payment'])){
 }
 
 if ($scriptProperties['action']=='showMethods') {
-	$org_mode = ($scriptProperties['mode'] == 2);
+	$org_mode = ($scriptProperties['mode'] >= 2);
 	$output = $ym->getSelectHtml();
 	return $output;
 }

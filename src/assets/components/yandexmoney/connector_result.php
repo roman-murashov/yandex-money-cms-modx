@@ -29,15 +29,5 @@ if ($_GET['fail'] == 1){
 
 require_once YANDEXMONEY_PATH.'model/yandexmoney.class.php';
 $ym = new Yandexmoney($modx, $config);
-
-$order_id = $ym->ProcessResult();
-
-if ($order_id){
-	$modx->addPackage('shopkeeper', MODX_CORE_PATH."components/shopkeeper/model/");
-	$order = $modx->getObject('SHKorder',array('id'=>$order_id));
-
-	$order->set('status', 5);
-	$order->save();
-}
-
+$ym->ProcessResult();
 ?>

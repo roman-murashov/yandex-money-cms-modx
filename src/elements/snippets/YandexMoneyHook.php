@@ -16,12 +16,11 @@ if(!empty($_SESSION['shk_lastOrder']) && !empty($_SESSION['shk_lastOrder']['id']
     $ym->pay_method = !empty($_SESSION['shk_lastOrder']['payment']) ? $_SESSION['shk_lastOrder']['payment'] : '';
     $order_id = (int)$_SESSION['shk_lastOrder']['id'];    
 }
-if (!empty($_POST['payment'])){
-	$ym->pay_method = $_POST['payment'];
-}
-if (!$ym->checkPayMethod()){
-	return true;
-}
+if (!empty($_POST['payment'])) $ym->pay_method = $_POST['payment'];
+if (!empty($_POST['email'])) $ym->email = $_POST['email'];
+if (!empty($_POST['phone'])) $ym->phone = $_POST['phone'];
+
+if (!$ym->checkPayMethod()) return true;
 
 $modx->addPackage('shopkeeper', MODX_CORE_PATH."components/shopkeeper/model/");
 $order = $modx->getObject('SHKorder',array('id'=>$order_id));

@@ -7,11 +7,16 @@
  *
  * @author YandexMoney
  * @package yandexmoney
- * @version 1.2.0
+ * @version 1.3.0
  */
 
 
 class Yandexmoney {
+
+	private $paymode;
+
+	public $email = false;
+	public $phone = false;
 
 	public $test_mode;
 	public $org_mode;
@@ -56,78 +61,36 @@ class Yandexmoney {
 	
 	public $pay_method;
     
-    function __construct(modX &$modx,$config = array()) {
-		$this->org_mode = ($config['mode'] == 2);
+    function __construct(modX &$modx, $config = array()) {
+		$this->org_mode = ($config['mode'] >= 2);
 		$this->test_mode = ($config['testmode'] == 1);
 		$this->shopid = ($config['testmode'] == 1);
+		$this->paymode = (bool) ($config['mode'] == 3);
 
-		
+
 		if (isset($config) && is_array($config)){
 			foreach ($config as $k=>$v){
 				$this->$k = $v;
 			}
 		}
-
-		
-
 		$this->modx =& $modx;
 		
 		//$this->modx->addPackage('yandexmoney', $this->config['corePath'].'model/');		
     }
-    
-
-	/**
-	 * Переводит статус заказа в "Оплата получена" (Shopkeeper)
-	 * 
-	 */
-	function shkOrderPaid($order_id){
-		
-		if($order_id){
-			
-			$this->modx->addPackage('shopkeeper', MODX_CORE_PATH."components/shopkeeper/model/");
-			
-			$order = $this->modx->getObject('SHKorder',$order_id);
-			if($order){
-				$order->set('status',$this->modx->config['yandexmonay.payStatusOut']);
-				$order->save();
-				return true;	
-			}	
-		}
-		return false;
-		
-	}
-
 
 	public function getFormUrl(){
-		if (!$this->org_mode){
-			return $this->individualGetFormUrl();
-		}else{
-			return $this->orgGetFormUrl();
-		}
-	}
-
-	public function individualGetFormUrl(){
-		if ($this->test_mode){
-			return 'https://demomoney.yandex.ru/quickpay/confirm.xml';
-		}else{
-			return 'https://money.yandex.ru/quickpay/confirm.xml';
-		}
-	}
-
-	public function orgGetFormUrl(){
-		if ($this->test_mode){
-            return 'https://demomoney.yandex.ru/eshop.xml';
-        } else {
-            return 'https://money.yandex.ru/eshop.xml';
-        }
+		$demo = ($this->test_mode)?'demo':'';
+		$mode = ($this->org_mode)?'/eshop.xml':'/quickpay/confirm.xml';
+		return 'https://'.$demo.'money.yandex.ru'.$mode;
 	}
 
 	public function checkPayMethod(){
-		if (in_array($this->pay_method, array('PC','AC','MC','GP','WM','AB','SB','MA','PB','QW','QP'))) return TRUE;
-		return FALSE;
+		return (in_array($this->pay_method, array('PC','AC','MC','GP','WM','AB','SB','MA','PB','QW','QP')) || $this->paymode);
 	}
 
 	public function getSelectHtml(){
+		//if ((int)$this->status === 0)	return '';
+		if ($this->paymode) return "<option value=''>Яндекс.Касса (банковские карты, электронные деньги и другое)</option>";
 		$list_methods=array(
 			'ym'=>array('PC'=>'Оплата из кошелька в Яндекс.Деньгах'),
 			'cards'=>array('AC'=>'Оплата с произвольной банковской карты'),
@@ -141,6 +104,7 @@ class Yandexmoney {
 			'qw'=>array('QW'=>'Оплата через QIWI Wallet'),
 			'qp'=>array('QP'=>'Оплата через доверительный платеж (Куппи.ру)')
 		);
+		$output='';
 		foreach ($list_methods as $long_name=>$method_desc){
 			$by_default=(in_array($long_name, array('ym','cards')))?true:$this->org_mode;
 			if ($this->{'method_'.$long_name} == 1 && $by_default) {
@@ -153,22 +117,25 @@ class Yandexmoney {
 	}
 
 	public function createFormHtml(){
+		global $modx;
+		$site_url = $modx->config['site_url'];
+		$payType = ($this->paymode)?'':$this->pay_method;
+		$addInfo = ($this->email!==false)?'<input type="hidden" name="cps_email" value="'.$this->email.'" >':'';
+		$addInfo .= ($this->phone!==false)?'<input type="hidden" name="cps_phone" value="'.$this->phone.'" >':'';
+		$html = '<form method="POST" action="'.$this->getFormUrl().'"  id="paymentform" name = "paymentform">';
 		if ($this->org_mode){
-			$html = '
-				<form method="POST" action="'.$this->getFormUrl().'"  id="paymentform" name = "paymentform">
-				   <input type="hidden" name="paymentType" value="'.$this->pay_method.'" />
+			$html .= '<input type="hidden" name="paymentType" value="'.$payType.'" />
 				   <input type="hidden" name="shopid" value="'.$this->shopid.'">
 				   <input type="hidden" name="scid" value="'.$this->scid.'">
 				   <input type="hidden" name="orderNumber" value="'.$this->orderId.'">
 				   <input type="hidden" name="sum" value="'.$this->orderTotal.'" data-type="number" >
-				   <input type="hidden" name="customerNumber" value="'.$this->userId.'" >
-				   <input type="hidden" name="cms_name" value="modx" >
-				   <input type="hidden" name="shopSuccessURL" value="'.$this->successUrl.'" >
-				   <input type="hidden" name="shopFailURL" value="'.$this->failUrl.'" >					
-				</form>';
+				   <input type="hidden" name="customerNumber" value="'.$this->userId.'" >'.
+					$addInfo.'
+					<input type="hidden" name="shopSuccessUrl" value="'.$this->successUrl.'">
+					<input type="hidden" name="shopFailUrl" value="'.$this->failUrl.'">
+				   	';
 		}else{
-			$html = '<form method="POST" action="'.$this->getFormUrl().'"  id="paymentform" name = "paymentform">
-					   <input type="hidden" name="receiver" value="'.$this->account.'">
+			$html .= '  <input type="hidden" name="receiver" value="'.$this->account.'">
 					   <input type="hidden" name="formcomment" value="Order '.$this->orderId.'">
 					   <input type="hidden" name="short-dest" value="Order '.$this->orderId.'">
 					   <input type="hidden" name="writable-targets" value="'.$this->writable_targets.'">
@@ -183,92 +150,75 @@ class Yandexmoney {
 					   <input type="hidden" name="need-email" value="'.$this->need_email.'" >
 					   <input type="hidden" name="need-phone" value="'.$this->need_phone.'">
 					   <input type="hidden" name="need-address" value="'.$this->need_address.'">
-						<input type="hidden" name="SuccessUrl" value="'.$this->successUrl.'" >
-					</form>';
+						<input type="hidden" name="successUrl" value="'.$site_url.'assets/snippets/yandexmoney/callback.php?success=1">';
 		}
-		$html .= '<script type="text/javascript">
+		$html .= '<input type="hidden" name="cms_name" value="modx" >
+				</form>
+				<script type="text/javascript">
 						document.getElementById("paymentform").submit();
 					</script>';
-		return $html;
+		echo $html;
+		exit;
 	}
 
 
 	public function checkSign($callbackParams){
-		$string = $callbackParams['action'].';'.$callbackParams['orderSumAmount'].';'.$callbackParams['orderSumCurrencyPaycash'].';'.$callbackParams['orderSumBankPaycash'].';'.$callbackParams['shopId'].';'.$callbackParams['invoiceId'].';'.$callbackParams['customerNumber'].';'.$this->password;
-		$md5 = strtoupper(md5($string));
-		return ($callbackParams['md5']==$md5);
-	}
-
-	public function sendAviso($callbackParams, $code){
-		header("Content-type: text/xml; charset=utf-8");
-		$xml = '<?xml version="1.0" encoding="UTF-8"?>
-			<paymentAvisoResponse performedDatetime="'.date("c").'" code="'.$code.'" invoiceId="'.$callbackParams['invoiceId'].'" shopId="'.$this->shopid.'"/>';
-		echo $xml;
+		if ($this->org_mode){
+			$string = $callbackParams['action'].';'.$callbackParams['orderSumAmount'].';'.$callbackParams['orderSumCurrencyPaycash'].';'.$callbackParams['orderSumBankPaycash'].';'.$callbackParams['shopId'].';'.$callbackParams['invoiceId'].';'.$callbackParams['customerNumber'].';'.$this->password;
+			$md5 = strtoupper(md5($string));
+			return ($callbackParams['md5']==$md5);
+		}else{
+			$string = $callbackParams['notification_type'].'&'.$callbackParams['operation_id'].'&'.$callbackParams['amount'].'&'.$callbackParams['currency'].'&'.$callbackParams['datetime'].'&'.$callbackParams['sender'].'&'.$callbackParams['codepro'].'&'.$this->password.'&'.$callbackParams['label'];
+			$check = (sha1($string) == $callbackParams['sha1_hash']);
+			if (!$check){
+				header('HTTP/1.0 401 Unauthorized');
+				return false;
+			}
+			return true;
+		}
 	}
 
 	public function sendCode($callbackParams, $code){
-		header("Content-type: text/xml; charset=utf-8");
-		$xml = '<?xml version="1.0" encoding="UTF-8"?>
-			<checkOrderResponse performedDatetime="'.date("c").'" code="'.$code.'" invoiceId="'.$callbackParams['invoiceId'].'" shopId="'.$this->shopid.'"/>';
-		echo $xml;
-	}
-
-	public function checkOrder($callbackParams, $sendCode=FALSE, $aviso=FALSE){ 
-		
-		if ($this->checkSign($callbackParams)){
-			$code = 0;
-		}else{
-			$code = 1;
-		}
-		
-		if ($sendCode){
-			if ($aviso){
-				$this->sendAviso($callbackParams, $code);
+		if(!$this->org_mode){
+			if (code===0){
+				header('HTTP/1.0 200 OK');
 			}else{
-				$this->sendCode($callbackParams, $code);
+				header('HTTP/1.0 401 Unauthorized');
 			}
 			return;
-		}else{
-			return $code;
 		}
-	}
-
-	public function individualCheck($callbackParams){
-		$string = $callbackParams['notification_type'].'&'.$callbackParams['operation_id'].'&'.$callbackParams['amount'].'&'.$callbackParams['currency'].'&'.$callbackParams['datetime'].'&'.$callbackParams['sender'].'&'.$callbackParams['codepro'].'&'.$this->password.'&'.$callbackParams['label'];
-		$check = (sha1($string) == $callbackParams['sha1_hash']);
-		if (!$check){
-			header('HTTP/1.0 401 Unauthorized');
-			return false;
-		}
-		return true;
-	
+		header("Content-type: text/xml; charset=utf-8");
+		$xml = '<?xml version="1.0" encoding="UTF-8"?>
+			<'.$callbackParams['action'].'Response performedDatetime="'.date("c").'" code="'.$code.'" invoiceId="'.$callbackParams['invoiceId'].'" shopId="'.$this->shopid.'"/>';
+		echo $xml;
 	}
 
 	/* оплачивает заказ */
 	public function ProcessResult()
 	{
 		$callbackParams = $_POST;
-		$order_id = false;
-		if ($this->org_mode){
-			if ($callbackParams['action'] == 'checkOrder'){
-				$code = $this->checkOrder($callbackParams);
-				$this->sendCode($callbackParams, $code);
-			}
-			if ($callbackParams['action'] == 'paymentAviso'){
-				$order_id = (int)$callbackParams["orderNumber"];
-				$this->checkOrder($callbackParams, TRUE, TRUE);
+		if ($this->checkSign($callbackParams)){
+			$order_id = ($this->org_mode)? intval($callbackParams["orderNumber"]):intval($callbackParams["label"]);
+			if ($order_id){
+				$this->modx->addPackage('shopkeeper', MODX_CORE_PATH."components/shopkeeper/model/");
+				$order = $this->modx->getObject('SHKorder',array('id'=>$order_id));
+				$amount = number_format($order->get('price'),2,".",'');
+				$pay_amount = number_format($callbackParams[($this->org_mode)?'orderSumAmount':'amount'], 2, '.', '');
+				if ($pay_amount===$amount){
+					if (!$this->org_mode || $callbackParams['action'] == 'paymentAviso'){
+						$order->set('status', 5);
+						$order->save();
+					}
+					$this->sendCode($callbackParams, 0);
+				}else{
+					$this->sendCode($callbackParams, 100);
+				}
+			}else{
+				$this->sendCode($callbackParams, 200);
 			}
 		}else{
-			$check = $this->individualCheck($callbackParams);
-			
-			if (!$check){
-				
-			}else{
-				$order_id = (int)$callbackParams["label"];
-			}
+			$this->sendCode($callbackParams, 1);
 		}
-		
-		return $order_id;
 	}
 
 
