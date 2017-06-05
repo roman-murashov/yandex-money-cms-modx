@@ -7,7 +7,7 @@
  *
  * @author YandexMoney
  * @package yandexmoney
- * @version 1.3.0
+ * @version 1.4.0
  */
 
 
@@ -74,6 +74,7 @@ class Yandexmoney {
 			}
 		}
 		$this->modx =& $modx;
+		$this->config = $config;
 		
 		//$this->modx->addPackage('yandexmoney', $this->config['corePath'].'model/');		
     }
@@ -118,6 +119,42 @@ class Yandexmoney {
 
 	public function createFormHtml(){
 		global $modx;
+
+        $order = $modx->getObject('SHKorder',array('id'=>$this->orderId));
+
+        if (isset($this->config['ya_kassa_send_check']) && $this->config['ya_kassa_send_check']) {
+            $receipt = array(
+                'customerContact' => $order->_fields['email'],
+                'items' => array(),
+            );
+
+            if ($content = unserialize($order->_fields['content'])) {
+                foreach ($content as $item) {
+                    $receipt['items'][] = array(
+                        'quantity' => $item['count'],
+                        'text' => substr($item['name'], 0, 128),
+                        'tax' => ($this->config['tax_id'] ? $this->config['tax_id'] : 1),
+                        'price' => array(
+                            'amount' => number_format($item['price'], 2, '.', ''),
+                            'currency' => 'RUB'
+                        ),
+                    );
+                }
+            }
+
+            if ($order->_fields['delivery']) {
+                $receipt['items'][] = array(
+                    'quantity' => 1,
+                    'text' => substr('testName', 0, 128),
+                    'tax' => ($this->config['tax_id'] ? $this->config['tax_id'] : 1),
+                    'price' => array(
+                        'amount' => number_format(0, 2, '.', ''),
+                        'currency' => 'RUB'
+                    ),
+                );
+            }
+        }
+
 		$site_url = $modx->config['site_url'];
 		$payType = ($this->paymode)?'':$this->pay_method;
 		$addInfo = ($this->email!==false)?'<input type="hidden" name="cps_email" value="'.$this->email.'" >':'';
@@ -134,6 +171,10 @@ class Yandexmoney {
 					<input type="hidden" name="shopSuccessUrl" value="'.$this->successUrl.'">
 					<input type="hidden" name="shopFailUrl" value="'.$this->failUrl.'">
 				   	';
+
+            if (isset($this->config['ya_kassa_send_check']) && $this->config['ya_kassa_send_check']) {
+                $html .= '<input type="hidden" name="ym_merchant_receipt" value=\''.json_encode($receipt).'\'>';
+            }
 		}else{
 			$html .= '  <input type="hidden" name="receiver" value="'.$this->account.'">
 					   <input type="hidden" name="formcomment" value="Order '.$this->orderId.'">
@@ -157,6 +198,7 @@ class Yandexmoney {
 				<script type="text/javascript">
 						document.getElementById("paymentform").submit();
 					</script>';
+
 		echo $html;
 		exit;
 	}
@@ -205,7 +247,7 @@ class Yandexmoney {
 				$amount = number_format($order->get('price'),2,".",'');
 				$pay_amount = number_format($callbackParams[($this->org_mode)?'orderSumAmount':'amount'], 2, '.', '');
 				if ($pay_amount===$amount){
-					if (!$this->org_mode || $callbackParams['action'] == 'paymentAviso'){
+					if ($callbackParams['action'] == 'paymentAviso' || !$this->org_mode){
 						$order->set('status', 5);
 						$order->save();
 					}
