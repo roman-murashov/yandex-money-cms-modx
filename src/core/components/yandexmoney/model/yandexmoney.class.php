@@ -222,7 +222,7 @@ class Yandexmoney {
 
 	public function sendCode($callbackParams, $code){
 		if(!$this->org_mode){
-			if (code===0){
+			if ($code===0){
 				header('HTTP/1.0 200 OK');
 			}else{
 				header('HTTP/1.0 401 Unauthorized');
