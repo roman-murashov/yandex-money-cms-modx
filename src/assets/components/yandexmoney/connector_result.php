@@ -11,23 +11,21 @@ $snippet = $modx->getObject('modSnippet',array('name'=>'YandexMoney'));
 $config = $snippet->getProperties();
 
 if (!defined('YANDEXMONEY_PATH')) {
-	define('YANDEXMONEY_PATH', MODX_CORE_PATH."components/yandexmoney/");
+    define('YANDEXMONEY_PATH', MODX_CORE_PATH."components/yandexmoney/");
 }
 
-if ($_GET['fail'] == 1){
-	if ($res = $modx->getObject('modResource', $config['fail_page_id'])) {
-		$modx->sendRedirect($modx->makeUrl($config['fail_page_id'],'','','full'));
-	}
-	exit;
-}elseif($_GET['success']==1){
-	if ($res = $modx->getObject('modResource', $config['success_page_id'])) {
-		$modx->sendRedirect($modx->makeUrl($config['success_page_id'],'','','full'));
-	}
-	exit;
+if ($_GET['fail'] == 1) {
+    if ($res = $modx->getObject('modResource', $config['fail_page_id'])) {
+        $modx->sendRedirect($modx->makeUrl($config['fail_page_id'],'','','full'));
+    }
+    exit;
+} elseif($_GET['success'] == 1) {
+    if ($res = $modx->getObject('modResource', $config['success_page_id'])) {
+        $modx->sendRedirect($modx->makeUrl($config['success_page_id'],'','','full'));
+    }
+    exit;
 }
-
 
 require_once YANDEXMONEY_PATH.'model/yandexmoney.class.php';
 $ym = new Yandexmoney($modx, $config);
 $ym->ProcessResult();
-?>

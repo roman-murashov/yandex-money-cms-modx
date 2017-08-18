@@ -1,0 +1,5 @@
+Changelog file for YandexMoney component.
+ 
+YandexMoney 1.4
+====================================
+* add Yandex.Billing purchase option

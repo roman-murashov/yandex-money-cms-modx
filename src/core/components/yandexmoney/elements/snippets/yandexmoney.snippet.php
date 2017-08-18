@@ -12,7 +12,7 @@ $ym = new Yandexmoney($modx, $scriptProperties);
 
 if(!empty($_SESSION['shk_lastOrder']) && !empty($_SESSION['shk_lastOrder']['id'])) {
     $ym->pay_method = !empty($_SESSION['shk_lastOrder']['payment']) ? $_SESSION['shk_lastOrder']['payment'] : '';
-    $order_id = (int)$_SESSION['shk_lastOrder']['id'];    
+    $order_id = (int)$_SESSION['shk_lastOrder']['id'];
 }
 
 if (!empty($_POST['payment'])) {

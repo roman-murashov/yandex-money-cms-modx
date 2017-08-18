@@ -3,7 +3,7 @@
 $eventName = $modx->event->name;
 $_isAdmin = ($modx->user->sudo == 1);
 
-if(!defined('YANDEXMONEY_PATH')) {
+if (!defined('YANDEXMONEY_PATH')) {
     define('YANDEXMONEY_PATH', MODX_CORE_PATH."components/yandexmoney/");
 }
 require_once YANDEXMONEY_PATH.'model/yandexmoney.class.php';
@@ -13,7 +13,7 @@ $config = $snippet->getProperties();
 
 $ym = new Yandexmoney($modx, $config);
 
-if(!empty($_SESSION['shk_lastOrder']) && !empty($_SESSION['shk_lastOrder']['id'])) {
+if (!empty($_SESSION['shk_lastOrder']) && !empty($_SESSION['shk_lastOrder']['id'])) {
     $ym->pay_method = !empty($_SESSION['shk_lastOrder']['payment']) ? $_SESSION['shk_lastOrder']['payment'] : '';
     $order_id = (int)$_SESSION['shk_lastOrder']['id'];    
 }
