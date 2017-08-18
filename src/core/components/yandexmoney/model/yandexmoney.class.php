@@ -151,7 +151,7 @@ class Yandexmoney
 
     public function getSelectHtml()
     {
-        $result = (json_encode(array('mode' => $this->mode)));
+        $result = json_encode(array('mode' => $this->mode));
         if ($this->mode == self::MODE_MONEY) {
             return "<option value=''>Яндекс.Касса (банковские карты, электронные деньги и другое)</option>";
         } elseif ($this->mode == self::MODE_KASSA) {
@@ -303,7 +303,7 @@ class Yandexmoney
     public function sendCode($callbackParams, $code)
     {
         if (!$this->org_mode) {
-            if ($code === 0){
+            if ($code === 0) {
                 header('HTTP/1.0 200 OK');
             } else {
                 header('HTTP/1.0 401 Unauthorized');
@@ -320,26 +320,26 @@ class Yandexmoney
     public function ProcessResult()
     {
         $callbackParams = $_POST;
-        if ($this->checkSign($callbackParams)){
+        if ($this->checkSign($callbackParams)) {
             $order_id = ($this->org_mode)? intval($callbackParams["orderNumber"]):intval($callbackParams["label"]);
-            if ($order_id){
+            if ($order_id) {
                 $this->modx->addPackage('shopkeeper', MODX_CORE_PATH."components/shopkeeper/model/");
                 $order = $this->modx->getObject('SHKorder',array('id'=>$order_id));
                 $amount = number_format($order->get('price'),2,".",'');
                 $pay_amount = number_format($callbackParams[($this->org_mode)?'orderSumAmount':'amount'], 2, '.', '');
-                if ($pay_amount===$amount){
+                if ($pay_amount === $amount) {
                     if ($callbackParams['action'] == 'paymentAviso' || !$this->org_mode){
                         $order->set('status', 5);
                         $order->save();
                     }
                     $this->sendCode($callbackParams, 0);
-                }else{
+                } else {
                     $this->sendCode($callbackParams, 100);
                 }
-            }else{
+            } else {
                 $this->sendCode($callbackParams, 200);
             }
-        }else{
+        } else {
             $this->sendCode($callbackParams, 1);
         }
     }
